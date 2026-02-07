@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 def ax_constant(df, value=0.5):
     df = df.copy()
     df["ax"] = value
