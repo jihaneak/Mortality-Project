@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import chi2
 
 def poisson_mx(df, alpha=0.05):
@@ -54,5 +55,28 @@ def mx_to_qx_delta(df, ax=0.5, alpha=0.05):
     z = 1.96
     df["qx_lower"] = (df["qx"] - z * df["se_qx"]).clip(0, 1)
     df["qx_upper"] = (df["qx"] + z * df["se_qx"]).clip(0, 1)
+
+    return df
+
+def poisson_mx_exact_ci(df, alpha=0.05):
+    """
+    Exact Poisson confidence interval for mx using chi-square inversion
+    """
+    df = df.copy()
+
+    D = df["Deaths"]
+    E = df["Exposure"]
+
+    # Avoid zero issues (chi-square with 0 df)
+    D_safe = D.copy()
+    D_safe[D_safe == 0] = 1e-10
+
+    # Lambda CI
+    lambda_lower = 0.5 * chi2.ppf(alpha / 2, 2 * D_safe)
+    lambda_upper = 0.5 * chi2.ppf(1 - alpha / 2, 2 * (D + 1))
+
+    # mx CI
+    df["mx_lower_exact"] = lambda_lower / E
+    df["mx_upper_exact"] = lambda_upper / E
 
     return df
