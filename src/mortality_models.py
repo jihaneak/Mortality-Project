@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2
+from scipy.stats import norm 
 
 def poisson_mx(df, alpha=0.05):
     """
@@ -17,8 +18,8 @@ def poisson_mx(df, alpha=0.05):
     E = df["Exposure"].values
 
     # MLE
-    df["mx"] = D / E
-
+    with np.errstate(divide='ignore', invalid='ignore'):
+        df["mx"] = np.where(E > 0, D / E, 0)
     # Exact Poisson CI for lambda = E * m
     lambda_lower = 0.5 * chi2.ppf(alpha / 2, 2 * D)
     lambda_upper = 0.5 * chi2.ppf(1 - alpha / 2, 2 * (D + 1))
@@ -80,3 +81,33 @@ def poisson_mx_exact_ci(df, alpha=0.05):
     df["mx_upper_exact"] = lambda_upper / E
 
     return df
+
+
+def binomial_qx(df, alpha=0.05):
+    """
+    Binomial mortality model:
+    Dx ~ Binomial(Ex, qx)
+
+    Returns qx with Wald confidence interval.
+    """
+
+    df = df.copy()
+
+    D = df["Deaths"]
+    E = df["Exposure"]
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        # 2. Calculate qx safely
+        df["qx_binom"] = np.where(E > 0, D / E, 0)
+
+    # Variance
+    var_qx = (df["qx_binom"] * (1 - df["qx_binom"])) / E.replace(0, np.nan)
+    df["se_qx_binom"] = np.sqrt(np.where(var_qx > 0, var_qx, 0))
+
+    z = norm.ppf(1 - alpha/2)
+
+    df["qx_binom_lower"] = (df["qx_binom"] - z * df["se_qx_binom"]).clip(0, 1)
+    df["qx_binom_upper"] = (df["qx_binom"] + z * df["se_qx_binom"]).clip(0, 1)
+
+    return df
+
