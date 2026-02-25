@@ -34,6 +34,16 @@ with st.sidebar:
     st.title("🛡️ Settings")
     gender = st.selectbox("Target Gender", ["Female", "Male"])
     horizon = st.slider("Forecast Horizon", 10, 50, 30)
+    
+    st.markdown("---")
+    st.subheader("🧬 Actuarial Assumptions")
+    # Ajout du sélecteur de méthode pour ax
+    ax_choice = st.selectbox(
+        "Méthode pour ax", 
+        ["constant", "data_based", "coale_demeny"],
+        help="Détermine la répartition des décès sur l'année (crucial pour la mortalité infantile)."
+    )
+    
     st.info("Modèle : Lee-Carter Stochastic Projection")
 
 df_full = load_data()
@@ -41,15 +51,20 @@ df_full = load_data()
 if df_full is not None:
     df_sub = df_full[df_full['Sex'] == gender].copy()
     
+    # 1. Calibration Lee-Carter
     ax_param, bx_param, kt_param = fit_lee_carter(df_sub)
     drift = (kt_param[-1] - kt_param[0]) / (len(kt_param) - 1)
     kt_proj = kt_param[-1] + (drift * np.arange(1, horizon + 1))
     
+    # 2. Reconstruction des taux mx pour l'année projetée
     mx_f = reconstruct_mx(ax_param, bx_param, [kt_proj[-1]])
     df_lt_in = mx_f.iloc[:, 0].to_frame(name='mx').reset_index().rename(columns={'index':'Age'})
-    df_lt_in['ax'], df_lt_in['qx'] = 0.5, df_lt_in['mx']/(1+0.5*df_lt_in['mx'])
-    lt_final = compute_life_table(df_lt_in)
+    
+    # 3. Calcul de la Life Table avec la méthode choisie (ax géré à l'intérieur de compute_life_table)
+    # Plus besoin de forcer ax = 0.5 ici, ta fonction s'en occupe
+    lt_final = compute_life_table(df_lt_in, ax_method=ax_choice)
 
+    # --- Header Metrics ---
     st.header(f"Mortality Analytics Dashboard : {gender}")
     k1, k2, k3 = st.columns(3)
     k1.metric("Projected e0", f"{lt_final.iloc[0]['ex']:.2f} yrs")
@@ -104,7 +119,7 @@ if df_full is not None:
         st.subheader("Lexis Surface (Log-Mortality)")
         try:
             heat_data = df_sub.pivot_table(index='Age', columns='Year', values='mx')
-            log_mx = np.log10(heat_data + 1e-10) # Log10 pour le contraste
+            log_mx = np.log10(heat_data + 1e-10)
             fig_h, ax_h = plt.subplots(figsize=(15, 8), facecolor='#0e1117')
             sns.heatmap(log_mx, cmap="magma", ax=ax_h, vmin=-5, vmax=-0.5, cbar_kws={'label': 'Log10 Mortality'})
             ax_h.tick_params(colors='white')
