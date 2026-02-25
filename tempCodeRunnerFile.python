@@ -1,0 +1,7 @@
+import pandas as pd
+deaths = pd.read_csv("data/france_deaths_clean.csv")
+exposure = pd.read_csv("data/france_population_clean.csv")
+
+print("Deaths columns:", deaths.columns.tolist())
+print("Exposure columns:", exposure.columns.tolist())
+
