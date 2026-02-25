@@ -40,7 +40,7 @@ The pipeline is general and can be applied to any country.
 Install dependencies: pip install -r requirements.txt
 
 Run full pipeline: python src/main.py
-git
+
 Launch dashboard streamlit run app.py
 
 
