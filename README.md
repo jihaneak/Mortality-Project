@@ -41,7 +41,7 @@ Install dependencies: pip install -r requirements.txt
 
 Run full pipeline: python src/main.py
 
-Launch dashboard streamlit run app.py
+Launch dashboard: streamlit run app.py
 
 
 ---
