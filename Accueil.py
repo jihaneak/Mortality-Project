@@ -391,6 +391,34 @@ for col, (icon, title, desc, page) in zip([c1, c2, c3, c4], [
         </div>""", unsafe_allow_html=True)
         st.page_link(page, label=f"Ouvrir →")
 
+# ── Résultats backtesting ─────────────────────────────────────────────────────
+# ── Outputs notebooks ─────────────────────────────────────────────────────────
+st.markdown("""
+<div style='display:flex;align-items:center;gap:.6rem;margin:1.5rem 0 1rem'>
+    <div style='width:8px;height:8px;border-radius:50%;background:#3fb950'></div>
+    <div style='font-size:1rem;font-weight:600;color:#e6edf3'>
+        Résultats — Backtesting H+F & Analyse
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+import os
+OUTPUTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+
+plots = [
+    ("outputs/backtest_HF_all_models.png",  "Backtest rolling — tous modèles H+F 2001–2020"),
+    ("outputs/lc_residuals_HF.png",       "Résidus Lee-Carter — Carte de chaleur H vs F"),
+    ("outputs/cbd_k1k2_HF.png",           "Paramètres CBD κ1/κ2 — Hommes vs Femmes"),
+    ("outputs/gender_gap_e0.png",         "Espérance de vie & Écart H/F — 1950–2024"),
+    ("outputs/gender_gap_decomposition..png",    "Décomposition de l'écart e₀ par âge"),
+]
+
+for filename, caption in plots:
+    full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+    if os.path.exists(full_path):
+        st.markdown(f"<p style='color:#8b949e;font-size:.85rem;margin:.8rem 0 .3rem'>{caption}</p>",
+                    unsafe_allow_html=True)
+        st.image(full_path, use_container_width=True)
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div style='text-align:center;color:#484f58;font-size:.75rem;
